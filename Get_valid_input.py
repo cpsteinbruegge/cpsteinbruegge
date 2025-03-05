@@ -1,3 +1,7 @@
+import datetime
+import sys  
+
+
 def get_valid_date(prompt):
     while True:
         date_str = input(prompt)
@@ -24,5 +28,5 @@ def get_valid_int(prompt):
             return value
                 
         except ValueError:
-            print("Invalid input. Please enter an integer.")
+            print("Invalid input. Please enter an integer. ")
 

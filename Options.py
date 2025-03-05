@@ -6,6 +6,7 @@ import sys
 import datetime
 import tabulate
 import Get_valid_input
+import re
 
 
 
@@ -55,28 +56,64 @@ class Options:
             except ValueError:
                 print("Invalid date. Please try again.")
 
+    def get_valid_symbol(self, prompt):
+        while True:
+            symbol = input(prompt)  
+            if re.match(r'^[A-Za-z]{1,4}+$', symbol):
+                return symbol.upper()
+            else:
+                print("Invalid symbol. Please enter 1-4 letters.")
+            
+
+
+
     def enter_data(self):       
         
         proceed = True                                  
         
         while proceed:
-            symbol = input("Enter Symbol: ")
+
+            symbol = self.get_valid_symbol("Enter Symbol: ").upper()    
+            #debug    
             tradedate = self.get_valid_date("Enter Date (MM-DD-YYYY):")    
-            cp = input("Enter C/P: ")
-            strike = input("Enter Strike: ")
-            exp_date = self.get_valid_date("Enter Exp Date (MM-DD-YYYY): ")
+            while True:
+                cp = input("Enter C/P: ").upper()
+                if cp == "C" or cp == "P":
+                    break
+                else:
+                    print("Invalid input. Please enter C or P.")
+
+            strike = Get_valid_input.get_valid_int("Enter Strike: ")
+            exp_date = Get_valid_input.get_valid_date("Enter Exp Date (MM-DD-YYYY): ")
             premium = Get_valid_input.get_valid_float("Enter Premium ($x.xx): ",2)   
-            contracts = int(input("Enter Contracts: "))
+            contracts = Get_valid_input.get_valid_int("Enter Contracts: ")
             current_price = Get_valid_input.get_valid_int("Enter Current Price: ")
             close_cost = Get_valid_input.get_valid_int("Enter Close Cost: ")
-            status = input("Enter Status: O/C: ")
+            #Get status
+            while True:
 
-
+                status = input("Enter Status: O/C: ").upper()
+                if status == "O" or status == "C":
+                    break   
+                else:
+                    print("Invalid input. Please enter (O)pen or (C)losed.")
+             
             self.log_trade(symbol,tradedate, cp, strike, exp_date, premium, contracts, current_price, close_cost, status)
+            
+            #Ask user if they want to add another trade
 
+            while True:   
+               answer = input("Add another trade? Y/N ").upper()   
+               if answer in {'Y','N'}:
+                   break
+               else:
+                   print("Invalid input. Please enter Y or N.")
 
-            proceed = input("Add another trade? Y/N ") == "Y"
-
+            if answer == "N":
+               proceed = False  
+            elif answer == "Y":
+               proceed = True           
+              
     def log_trade (self,symbol, tradedate, cp, strike, exp_date, premium, contracts, current_price, close_cost, status,):
         try:
             total_open_premium= float(premium) * int(contracts) * 100
@@ -97,10 +134,9 @@ class Options:
             with open(self.file_name , mode='r') as file:
                 reader = csv.reader(file)
                 data = list(reader)
-                print("DATE READ FROM FILE", data)
+               # print("DATE READ FROM FILE", data)
             if len(data) > 1:
                headers =  data[0] 
-               print(headers)
                rows = data[1:]
                print("\n")  
                print(tabulate.tabulate(rows, headers=headers,tablefmt='PIPE'))               
