@@ -10,7 +10,7 @@ import re
 
 
 
-
+last_exp_date = None
 class Options:
     def __init__(self,file_name):
         self.file_name = file_name
@@ -70,10 +70,11 @@ class Options:
 
 
 
-    def enter_data(self):       
+    def enter_data(self):  
+        global last_exp_date     
         
         proceed = True                                  
-        
+                
         while proceed:
 
             symbol =self.get_valid_symbol("Enter Symbol: ").upper()    
@@ -88,7 +89,8 @@ class Options:
                     print("Invalid input. Please enter C or P.")
 
             strike = Get_valid_input.get_valid_int("Enter Strike: ")
-            exp_date = Get_valid_input.get_valid_date("Enter Exp Date (MM-DD-YYYY): ")
+            exp_date = Get_valid_input.get_valid_exp_date("Enter Exp Date (MM-DD-YYYY): ",default_date=last_exp_date)
+            last_exp_date = exp_date
             premium = Get_valid_input.get_valid_float("Enter Premium ($x.xx): ",2)   
             contracts = Get_valid_input.get_valid_int("Enter Contracts: ")
             current_price = Get_valid_input.get_valid_int("Enter Current Price: ")
