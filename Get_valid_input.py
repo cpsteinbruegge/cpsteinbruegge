@@ -6,16 +6,16 @@ def get_valid_date(prompt):
     while True:
         date_str = input(prompt)
         try:
-          print(f"Debug: User entered {date_str}") #debug
+          #print(f"Debug: User entered {date_str}") #debug
 
         
 
-          print(f"Debug: is date_str empty? {'Yes' if not date_str else 'No'}") #debug
+          #print(f"Debug: is date_str empty? {'Yes' if not date_str else 'No'}") #debug
           
          #(f"Debug: User entered {date_str}") #debug
 
-          if not date_str:                                # default to today's date if no date is entered 
-            print (f"{datetime.datetime.now().date()}")   # return today's date if no date is entered
+          if not date_str:
+            #print (f"{datetime.datetime.now().date()}")   # return today's date if no date is entered
             datetoday = datetime.datetime.now().strftime("%m-%d-%Y")
             print(f"{datetoday}")
             return datetoday
@@ -38,7 +38,7 @@ def get_valid_date(prompt):
 
 ''' def get_valid_date(prompt):
         date_str = input(prompt)
-        if not date_str:                    # default to today's date if no date is entered
+        if not date_str:
             return datetime.date.today()    # return today's date if no date is entered
 
         try:
@@ -47,37 +47,27 @@ def get_valid_date(prompt):
         except ValueError:
             print("Invalid date. Please try again.") '''
 
-
 def get_valid_exp_date(prompt, default_date=None):
     while True:
-        # If a default date is provided, include it in the prompt
         if default_date:
             prompt_with_default = f"{prompt} (Press <Enter> to use {default_date}): "
         else:
             prompt_with_default = f"{prompt}: "
 
         date_str = input(prompt_with_default)
-        print(f"Debug: User entered {date_str}")  # Debug statement
-        print(f"Debug: is date_str empty? {'Yes' if not date_str else 'No'}")  # Debug statement
-
         if not date_str:
             if default_date:
-                print(f"Using default date: {default_date}")
                 return default_date
-            else:       #if not default_date: print error message
-                print("No default date provided. Please enter a date.")
+            else:
+                print("No default date provided. Please enter a valid date.")
                 continue
-                
-        try:
-                     # Try to parse the input date
-                    date = datetime.datetime.strptime(date_str, "%m-%d-%Y")
-                    print(f"Valid date entered: {date.date()}")  # Debug statement
-                    return date.date()
-        except ValueError:
-                    # Handle invalid date input
-                    print("Invalid date. Please try again.")
 
-            
+        try:
+            date = datetime.datetime.strptime(date_str, "%m-%d-%Y")
+            return date.strftime("%m-%d-%Y")
+        except ValueError:
+            print("Invalid date format. Please try again.")
+
 def get_valid_float(prompt,decimal_places):
     while True:
         try:

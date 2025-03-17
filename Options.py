@@ -89,7 +89,7 @@ class Options:
                     print("Invalid input. Please enter C or P.")
 
             strike = Get_valid_input.get_valid_int("Enter Strike: ")
-            exp_date = Get_valid_input.get_valid_exp_date("Enter Exp Date (MM-DD-YYYY): ",default_date=last_exp_date)
+            exp_date = Get_valid_input.get_valid_exp_date("Expiration Date (MM-DD-YYYY); <Enter> for last used: ",default_date=last_exp_date)
             last_exp_date = exp_date
             premium = Get_valid_input.get_valid_float("Enter Premium ($x.xx): ",2)   
             contracts = Get_valid_input.get_valid_int("Enter Contracts: ")
