@@ -1,5 +1,25 @@
 import datetime
 import sys  
+import re
+
+
+def get_valid_symbol(prompt):
+    print(f"Debug: In get_valid_symbol") #debug
+    while True:
+        
+        try:
+
+
+            symbol = input(prompt).strip()  # Remove leading/trailing whitespace
+            print(f"Debug: User entered {symbol}") #debug
+
+            if re.match(r'^[A-Za-z]{1,4}$', symbol):
+                break
+        except Exception as e:
+          print("Invalid symbol. Please enter 1-4 letters.")
+
+    return symbol.upper()  # Convert to uppercase for consistency
+        
 
 def get_valid_date(prompt):
     
@@ -34,18 +54,7 @@ def get_valid_date(prompt):
 #current_date = get_valid_date("Enter Date (MM-DD-YYYY):")
 # get_valid_date("Enter Date (MM-DD-YYYY), Press <Return> for today's date: ")
 #print(current_date)    # print(current_date)
- 
 
-''' def get_valid_date(prompt):
-        date_str = input(prompt)
-        if not date_str:
-            return datetime.date.today()    # return today's date if no date is entered
-
-        try:
-            date = datetime.datetime.strptime(date_str, "%m-%d-%Y")
-            return date.date()
-        except ValueError:
-            print("Invalid date. Please try again.") '''
 
 def get_valid_exp_date(prompt, default_date=None):
     while True:
@@ -68,6 +77,28 @@ def get_valid_exp_date(prompt, default_date=None):
         except ValueError:
             print("Invalid date format. Please try again.")
 
+def get_valid_call_put  (prompt):    
+    # Get valid input for Call or Put option
+    while True:
+        cp = input("Enter C/P: ").upper()
+        if cp == "C" or cp == "P":
+            break
+        else:
+            print("Invalid input. Please enter C or P.")        
+    return cp   
+
+
+def get_valid_status (prompt):
+    while True:
+
+        status = input("Enter Status: (O)pen/(C)losed: ").upper()
+        if status == "O" or status == "C":
+            return status.upper()
+            break   
+        
+        else:
+                    print("Invalid input. Please enter (O)pen or (C)losed.")         
+
 def get_valid_float(prompt,decimal_places):
     while True:
         try:
@@ -87,3 +118,15 @@ def get_valid_int(prompt):
         except ValueError:
             print("Invalid input. Please enter an integer. ")
 
+#def main():      # Example usage
+
+    #get_valid_date("Enter Date (MM-DD-YYYY):")
+    get_valid_exp_date("Expiration Date (MM-DD-YYYY); <Enter> for last used: ",default_date="12-31-2023")
+    get_valid_symbol("Enter Symbol: ")
+    get_valid_call_put("Enter C/P: ")
+    get_valid_status ("Enter Status: (O)pen/(C)losed: ")
+    get_valid_float("Enter Premium ($x.xx): ",2)
+    get_valid_int("Enter Contracts: ")
+
+#f __name__ == "__main__":
+  # main()
