@@ -183,39 +183,37 @@ class Options:
         
 
     def view_trades(self):
-        print(f"File exists: {os.path.exists(self.file_name)}")  #debugging line
-        
+               
         print("\n")
 
         try:
             if not os.path.exists(self.file_name):
                   print("No trade records found.")
                   return
-            with open(self.file_name , mode='r') as file:
-                #debugging line
-                print("Raw data from file: ",file.read())
+            
 
             with open(self.file_name , mode='r') as file:  
+                print("Debug: File opened successfully - Raw file contents") #debugging line
+                print(file.read())
+                file.seek(0)
+
                 reader = csv.reader(file)
                 data = [row for row in reader if row]  #Skip empty rows
-                #data = list(reader) reader = csv.reader(file)
+                print(f"Debug: Data read from file: {data}") 
                
-                # print("DATA READ FROM FILE", data)  Debug
-                if data:
-                    print(data[0])  #debugging line for header row
-                    #print("All rows: ",data)  #debugging line
-                    print("All rows: ",data)  #debugging line
-            if len(data) > 1:
-               headers =  ["Row"] + data[0] 
-               rows = [[i] + row for i,row in enumerate(data[1:], start=1) if row] 
-               print("\n")
-               print(tabulate.tabulate(rows, headers=headers,tablefmt='PIPE'))   
+               
+                print(f"Number of rows: {len(data)}")   #debugging line
+                if len(data) > 1:
+                    headers =  ["Row"] + data[0] 
+                    rows = [[i] + row for i,row in enumerate(data[1:], start=1) if row] 
+                    print("\n")
+                    print(tabulate.tabulate(rows, headers=headers,tablefmt='PIPE'))   
                #debugging line
-               print("Total Rows: ",rows,len(rows))  #debugging line
-               return rows            
+               #print("Total Rows: ",rows,len(rows))  #debugging line
+                    return rows            
                
-            else:
-                print("No trade records found.")
+                else:
+                    print("No trade records found.")
 
         except Exception as e:
             print(f"Error viewing trades: {e}")
@@ -245,9 +243,7 @@ class Options:
             sys.exit(1)
 
 def Options_Trade_Editor (file_name, Amend_delete):
-    print("Made it to Options_Trade_Editor") #debugging line
-            #debugging line
-            #        print("Made it to Options_Trade_Editor") #debugging line
+   
             #   # Check if the file exists
     if not os.path.exists(file_name):   
         print(f"File {file_name} does not exist.")
@@ -289,7 +285,8 @@ def Options_Trade_Editor (file_name, Amend_delete):
             "Current Price": Get_valid_input.get_valid_int,
             "Close Cost": Get_valid_input.get_valid_int,
             "Status": Get_valid_input.get_valid_status,
-            "Profit/Loss": Get_valid_input.get_valid_float,  # Optional: Recalculate instead of asking
+            #"Profit/Loss": Get_valid_input.get_valid_float,  # Optional: Recalculate instead of asking
+
         }
 
         #Start getting new data and update rows
@@ -311,27 +308,45 @@ def Options_Trade_Editor (file_name, Amend_delete):
         # Loop through each field and ask for new values
 
             for i, (header, value) in enumerate(zip(headers, rows[trade_row-1][1:])):   # Skip the first column (row number)
-                print(f"Editing Field: {header} (Current Value: {value})")
-                validation_method = field_mapping.get(header)  # Get the corresponding validation method
-                if validation_method:
-                    new_value = input(f"Enter new value for {header} (or press Enter to keep '{value}'): ").strip()
-                    if new_value:
+                
+                    # Edit all other fields
+                if not header == "Profit/Loss":  # Skip Profit/Loss field
+                    print(f"Editing Field: {header} (Current Value: {value})")
+                    validation_method = field_mapping.get(header)  # Get the corresponding validation method
+                    if validation_method:
+                        new_value = input(f"Enter new value for {header} (or press Enter to keep '{value}'): ").strip()
+                        if new_value:
                     # Validate the new value using the corresponding method
-                        try:
-                            validated_value = validation_method(f"Enter valid {header}: ")
-                            updated_row.append(validated_value)
-                            print(f"Debug - Updated {header} to {validated_value}")  #debugging line
-                        except Exception as e:
-                            print(f"Invalid input for {header}. Keeping original value: {value}")
-                            updated_row.append(value)
-                    else:
+                            try:
+                                validated_value = validation_method(f"Enter valid {header}: ")
+                                updated_row.append(validated_value)
+                                print(f"Debug - Updated {header} to {validated_value}")  #debugging line
+                            except Exception as e:
+                                print(f"Invalid input for {header}. Keeping original value: {value}")
+                                updated_row.append(value)
+                        else:
                     # Keep the original value if no input is provided
-                        print(f"No input provided for {header}. Keeping original value: {value}",end="")  #debugging line
-                        updated_row.append(value)
-                        print(f"Keeping original value for {header}: {value}")
-                else:
+                            print(f"No input provided for {header}. Keeping original value: {value}",end="")  #debugging line
+                            updated_row.append(value)
+                            print(f"Keeping original value for {header}: {value}")
+                    else:
                 # If no validation method is defined, keep the original value
                         updated_row.append(value)
+
+                elif header == "Profit/Loss":
+                    # Recalculate "Profit/Loss" based on updated values and skip editing this field
+                    try:
+                        premium = float(updated_row[headers.index("Premium")])  # Adjust index for skipped row number
+                        contracts = int(updated_row[headers.index("Contracts")])
+                        close_cost = int(updated_row[headers.index("Close Cost")])
+                        # Calculate total open premium and profit/loss
+                        total_open_premium = premium * contracts * 100
+                        profit_loss = int(total_open_premium - close_cost)
+                        updated_row.append(f"{profit_loss:.2f}")  # Append recalculated "Profit/Loss"
+                        print(f"Recalculated Profit/Loss: {profit_loss}")  # Debugging line
+                    except Exception as e:
+                        print(f"Error recalculating Profit/Loss: {e}")
+                        updated_row.append("Error")  # Append a placeholder in case of error
 
            # Update the row in the list
                 rows[trade_row - 1] = updated_row
@@ -345,12 +360,14 @@ def Options_Trade_Editor (file_name, Amend_delete):
                     writer.writerow(headers)  # Write the header row
                     writer.writerows(rows)  # Write all rows
                     print("File updated successfully.")
-                    Options_Editor.view_trades()  # Display the updated trades after amendment
-
+                   
 
             except Exception as e:
                 print(f"Error updating file: {e}")
                 sys.exit(1)
+
+            Options_Editor.view_trades()  # Display the updated trades after amendment
+
         else:
           print(f"Trade {trade_row} not found.")
 
