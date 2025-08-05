@@ -18,7 +18,7 @@ import re
 #import Get_ticker_symbol
 
 
-
+CSV_HEADERS = ["Symbol", "Strike Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts", "Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"]
 
 last_exp_date = None
 class Options:
@@ -29,7 +29,9 @@ class Options:
             if not os.path.exists(self.file_name):
                 with open(self.file_name, 'w', newline="") as file:
                   writer = csv.writer(file)
-                  writer.writerow(["Symbol" ,"Date","C/P","Strike","Exp Date","Premium","Contracts", "Total Open Premium","Current Price","Close Cost", "Status", "Profit/Loss"])
+                  writer.writerow(CSV_HEADERS)  # Write the header row
+                  
+            # ["Symbol" ,"Strike Date","C/P","Strike","Exp Date","Premium","Contracts", "Total Open Premium","Current Price","Close Cost", "Status", "Profit/Loss"])
             #debugging line
                 
             with open(self.file_name, 'r', newline="") as file:
@@ -170,13 +172,25 @@ class Options:
             elif answer == "Y":
                  proceed = True           
               
-    def log_trade (self,symbol, tradedate, cp, strike, exp_date, premium, contracts, current_price, close_cost, status,):
+    def log_trade (self,symbol, tradedate, cp, strike, exp_date, premium, contracts, current_price, close_cost, status):
         try:
             total_open_premium= float(premium) * int(contracts) * 100
             profit_loss = int(total_open_premium - close_cost)
             with open(self.file_name, mode='a',newline= "") as file:
                 writer = csv.writer(file)
-                writer.writerow([symbol, tradedate, cp, strike, exp_date, premium, contracts, f"{total_open_premium:.0f}" , int(current_price), close_cost, status, int(profit_loss)])
+                writer.writerow([
+                    symbol,
+                    tradedate,
+                    cp, 
+                    strike,
+                    exp_date,
+                    premium,
+                    contracts, 
+                    f"{total_open_premium:.0f}",
+                    int(current_price),
+                    close_cost,
+                    status, 
+                    int(profit_loss)])
         except Exception as e:
             print(f"Error logging trade: {e}")
             sys.exit(1)
@@ -204,7 +218,7 @@ class Options:
                
                 print(f"Number of rows: {len(data)}")   #debugging line
                 if len(data) > 1:
-                    headers =  ["Row"] + data[0] 
+                    headers =  data[0] 
                     rows = [[i] + row for i,row in enumerate(data[1:], start=1) if row] 
                     print("\n")
                     print(tabulate.tabulate(rows, headers=headers,tablefmt='PIPE'))   
@@ -233,10 +247,13 @@ class Options:
             for row in data[1:]:
                     try:
                         total_profit_loss += int(row[-1])
+                        #print(f"Row {row[0]} Profit/Loss: {row[-1]}")  #debugging line
+                        #print(f"Debug: Total Profit/Loss so far: {total_profit_loss}")  #debugging line
+                    #except ValueError as e:
                     except (ValueError, IndexError):
                         print(f"Error calculating profit/loss for row {row}; skipping.")
                         #debug
-                        print("Row", row)
+                        #print("Row", row)
             print(f"Total Profit/Loss: {total_profit_loss}")
         except Exception as e:
             print(f"Error calculating profit/loss: {e}")
@@ -254,7 +271,13 @@ def Options_Trade_Editor (file_name, Amend_delete):
 
     # Initialize Options class with the file name
     Options_Editor.view_trades()  
-    rows = Options_Editor.view_trades()  # Get the current trades from the file     
+    with open(file_name, newline="") as file:
+      reader = csv.reader(file)
+      data = [row for row in reader if row]
+      headers = data[0]
+      rows = data[1:]
+   
+    # This line is being changed to above pure data method   #rows = Options_Editor.view_trades()  # Get the current trades from the file     
 
      # Display the current trades in the file
 
@@ -267,15 +290,17 @@ def Options_Trade_Editor (file_name, Amend_delete):
         trade_row = Get_valid_input.get_valid_int ("Enter the trade row to amend: ")    
         #Display the current trade details
         if 1 <= trade_row <= len(rows): 
-            print("/n")
+            print()
+
             #print("Amend Trade, not yet implemented.")              
             print(f"Current trade details: {rows[trade_row-1]}")
+
             
             #Make sure inputs are valid
 
             field_mapping = {
             "Symbol": Get_valid_input.get_valid_symbol,
-            "Date": Get_valid_input.get_valid_date,
+            "Strike Date": Get_valid_input.get_valid_date,
             "C/P": Get_valid_input.get_valid_call_put,
             "Strike": Get_valid_input.get_valid_int,
             "Exp Date": Get_valid_input.get_valid_exp_date,
@@ -292,22 +317,22 @@ def Options_Trade_Editor (file_name, Amend_delete):
         #Start getting new data and update rows
 
         # Header row for reference
-            headers = ["Symbol", "Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts",
-                   "Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"]
+            headers = CSV_HEADERS  # Use the predefined CSV headers
+            #["Symbol", "Strike Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts","Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"]
 
         # Update the row
             updated_row = []
         #debugging line
 
-            print("Editing trade details:")
-            print(list(enumerate(zip(headers, rows[trade_row-1]), start=1)))  #debugging line
+            #print("Editing trade details:")
+            #print(list(enumerate(zip(headers, rows[trade_row-1]), start=1)))  #debugging line
                
         
 
         #
         # Loop through each field and ask for new values
 
-            for i, (header, value) in enumerate(zip(headers, rows[trade_row-1][1:])):   # Skip the first column (row number)
+            for header, value in zip(headers, rows[trade_row-1]):   # Skip the first column (row number)
                 
                     # Edit all other fields
                 if not header == "Profit/Loss":  # Skip Profit/Loss field
@@ -335,18 +360,20 @@ def Options_Trade_Editor (file_name, Amend_delete):
 
                 elif header == "Profit/Loss":
                     # Recalculate "Profit/Loss" based on updated values and skip editing this field
-                    try:
+                    
+
                         premium = float(updated_row[headers.index("Premium")])  # Adjust index for skipped row number
                         contracts = int(updated_row[headers.index("Contracts")])
                         close_cost = int(updated_row[headers.index("Close Cost")])
                         # Calculate total open premium and profit/loss
                         total_open_premium = premium * contracts * 100
-                        profit_loss = int(total_open_premium - close_cost)
-                        updated_row.append(f"{profit_loss:.2f}")  # Append recalculated "Profit/Loss"
-                        print(f"Recalculated Profit/Loss: {profit_loss}")  # Debugging line
-                    except Exception as e:
-                        print(f"Error recalculating Profit/Loss: {e}")
-                        updated_row.append("Error")  # Append a placeholder in case of error
+                        try:
+                            profit_loss = int(total_open_premium - close_cost)
+                            updated_row.append(str(int(profit_loss)))  # Append recalculated "Profit/Loss"
+                        
+                        except Exception as e:
+                            print(f"Error recalculating Profit/Loss; Entering Zero: {e}")
+                            updated_row.append("0")  # Append a placeholder in case of error    
 
            # Update the row in the list
                 rows[trade_row - 1] = updated_row
@@ -357,7 +384,7 @@ def Options_Trade_Editor (file_name, Amend_delete):
             try:
                 with open(file_name, "w", newline="") as file:
                     writer = csv.writer(file)
-                    writer.writerow(headers)  # Write the header row
+                    writer.writerow(CSV_HEADERS)  # Write the header row
                     writer.writerows(rows)  # Write all rows
                     print("File updated successfully.")
                    
@@ -388,9 +415,10 @@ def Options_Trade_Editor (file_name, Amend_delete):
                  writer = csv.writer(file)
                     
                    # Write the header row first
-                 writer.writerow(["Symbol", "Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts", "Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"])  
+                 writer.writerow(CSV_HEADERS)
+                     #["Symbol", "Strike Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts", "Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"])  
 
-                 writer.writerows([row[1:] for row in rows])  # Write all rows except the header
+                 writer.writerows(rows)  # Write all rows except the header
 
                  print(f"File exists: {os.path.exists(file_name)}")  #d #debug
                      #debugging line            
@@ -428,3 +456,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
