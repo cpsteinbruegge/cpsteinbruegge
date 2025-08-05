@@ -1,0 +1,15 @@
+#Testing
+import Options
+import Get_valid_input
+
+def main(file_name):        
+    # Create an instance of the Options class
+    options = Options.Options(file_name)
+    row_number = 1
+    options.view_trades(file_name,row_number)  # View trades for the first row
+
+if __name__ == "__main__":
+    file_name = "options.csv"  # Replace with your CSV file name
+    main(file_name)
+
+

@@ -1,38 +1,24 @@
 import datetime
 import sys  
 import re
-import msvcrt
-import keyboard
 
 
-#def get_single_key():
-
-
-    # Waits for a single key press
-    # Suppress the key press event
-    # This will block until a key is pressed
-
+def get_valid_symbol(Init_Amend, prompt=None):
     
- #   key = keyboard.read_event(suppress=True).name     # Waits for a single key press
 
-  #  return key
-
-#def ms_get_single_key():
-
-  #  key = msvcrt.getch()  # Waits for a single key press
-   # return key.decode()  # Decode the byte to a string
-
-def get_valid_symbol(prompt):
     #print(f"Debug: In get_valid_symbol") #debug
     while True:
         
         try:
+            if Init_Amend == "Init":     #print(f"Debug: In get_valid_symbol") #debug
+              symbol = input(prompt).strip()  # Remove leading/trailing whitespace
+              print(f"Debug: User entered {symbol}") #debug
+            elif Init_Amend == "Amend":
+              symbol = input("New Symbol: ").strip()
+              print(f"Debug: User entered {symbol}") #debug
+              input("Debug: Press Enter to continue...") #debug
 
-
-            symbol = input(prompt).strip()  # Remove leading/trailing whitespace
-            #print(f"Debug: User entered {symbol}") #debug
-
-            if re.match(r'^[A-Za-z0-9./-]{1,5}$', symbol):
+            if re.match(r'^[A-Za-z]{1,4}$', symbol):
                 break
         except Exception as e:
           print("Invalid symbol. Please enter 1-4 letters.")
