@@ -12,13 +12,33 @@ import sys
 
 import tabulate
 import Get_valid_input
+from Get_valid_input import RestartProgram
 import re
 
 
 #import Get_ticker_symbol
 
+#Clean Options.csv file 
 
-CSV_HEADERS = ["Symbol", "Strike Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts", "Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"]
+with open("Options.csv", newline="") as infile, open("Options_cleaned.csv", "w", newline="") as outfile:
+    reader = csv.reader(infile)
+    writer = csv.writer(outfile)
+    header = next(reader)
+    writer.writerow(header)
+    for row in reader:
+        # Pad or trim row to match header length
+        if len(row) < len(header):
+            row += [""] * (len(header) - len(row))
+        elif len(row) > len(header):
+            row = row[:len(header)]
+        writer.writerow(row)
+
+# Rename the cleaned file to overwrite the original
+os.replace("Options_cleaned.csv", "Options.csv")
+
+#Now start the main program
+
+CSV_HEADERS = ["Symbol", "Open Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts", "Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"]
 
 last_exp_date = None
 class Options:
@@ -31,7 +51,7 @@ class Options:
                   writer = csv.writer(file)
                   writer.writerow(CSV_HEADERS)  # Write the header row
                   
-            # ["Symbol" ,"Strike Date","C/P","Strike","Exp Date","Premium","Contracts", "Total Open Premium","Current Price","Close Cost", "Status", "Profit/Loss"])
+            # ["Symbol" ,"Open Date","C/P","Strike","Exp Date","Premium","Contracts", "Total Open Premium","Current Price","Close Cost", "Status", "Profit/Loss"])
             #debugging line
                 
             with open(self.file_name, 'r', newline="") as file:
@@ -60,7 +80,7 @@ class Options:
             print("3. Calculate Total Profit/Loss")
             print("4. Amend trade records")
             print("5. Delete trade records")
-            print("6. Exit")
+            print("6. Exit Program - or press 'X' at any time to return to main menu.")
             print("\n")
          
             choice = input("Enter choice: ").strip()
@@ -75,15 +95,15 @@ class Options:
             elif choice == "3":
                 self.calculate_total_profit_loss()
             elif choice == "4":
-                print("To be implemented") #Delete trade records
+                
                 # Amend or delete trade records
                 
-                Amend_delete = "A" #Delete trade records
+                Amend_delete = "A" #Amend trade records
                 Options_Trade_Editor(self.file_name, Amend_delete)  
                 # os.remove(self.file_name) 
             elif choice == "5":
                 Amend_delete = "D" #Delete trade records
-                Options_Trade_Editor(self.file_name, Amend_delete) #Amend trade records  
+                Options_Trade_Editor(self.file_name, Amend_delete) #Delete trade records  
                 # os.remove(self.file_name) 
             elif choice == "6":
                 sys.exit(0)
@@ -117,6 +137,7 @@ class Options:
             exp_date = Get_valid_input.get_valid_exp_date("Expiration Date (MM-DD-YYYY); <Enter> for last used: ", default_date=last_exp_date)
             last_exp_date = exp_date
             premium = Get_valid_input.get_valid_float("Enter Premium ($x.xx): ", 2)
+            premium = round(float(premium), 2)  # Round to two decimal places
             contracts = Get_valid_input.get_valid_int("Enter Contracts: ")
             current_price = Get_valid_input.get_valid_int("Enter Current Price: ")
             close_cost = Get_valid_input.get_valid_int("Enter Close Cost: ")
@@ -174,7 +195,9 @@ class Options:
               
     def log_trade (self,symbol, tradedate, cp, strike, exp_date, premium, contracts, current_price, close_cost, status):
         try:
-            total_open_premium= float(premium) * int(contracts) * 100
+            print(f"Debug: premium={premium}, contracts={contracts}, close_cost={close_cost}")  #debugging line
+            total_open_premium= round(float(premium, 2) * int(contracts) * 100)
+            print(f"Debug: total_open_premium={total_open_premium}")  #debugging line
             profit_loss = int(total_open_premium - close_cost)
             with open(self.file_name, mode='a',newline= "") as file:
                 writer = csv.writer(file)
@@ -186,7 +209,7 @@ class Options:
                     exp_date,
                     premium,
                     contracts, 
-                    f"{total_open_premium:.0f}",
+                    total_open_premium,
                     int(current_price),
                     close_cost,
                     status, 
@@ -219,15 +242,64 @@ class Options:
                 print(f"Number of rows: {len(data)}")   #debugging line
                 if len(data) > 1:
                     headers =  data[0] 
-                    rows = [[i] + row for i,row in enumerate(data[1:], start=1) if row] 
+                    total_open_premium_index = headers.index("Total Open Premium")  # Get the index of the Total Open Premium column
+                    close_cost_index = headers.index("Close Cost")  # Get the index of the Close Cost column
+                    profit_loss_index = headers.index("Profit/Loss")  # Get the index of the Profit/Loss column 
+                    rows = []
+
+                    total_open_premium = 0
+                    total_close_cost = 0
+                    total_profit_loss = 0   
+
+                    # Format Premium column to two decimal places
+                    for i, row in enumerate(data[1:], start=1):
+                     if row:
+                         try:
+                            row[total_open_premium_index] = f"{int(row[total_open_premium_index])}" 
+                         except Exception:
+                             pass  # Leave as is if conversion fails
+                         try:
+                            total_open_premium += int(row[total_open_premium_index])
+                         except Exception:
+                            pass
+                         try:
+                            total_close_cost += int(row[close_cost_index])
+                         except Exception:
+                            pass
+                         try:
+                            total_profit_loss += int(row[profit_loss_index])
+                         except Exception:
+                            pass 
+                         rows.append([i] + row)
+                   
+                   
+                # Prepare the totals row, aligning with the correct columns
+                    totals_row = [''] * (len(headers) + 1)  # +1 for the Row number column
+                    totals_row[total_open_premium_index + 1] = f"{total_open_premium}"
+                    totals_row[close_cost_index + 1] = f"{total_close_cost}"
+                    totals_row[profit_loss_index + 1] = f"{total_profit_loss}"
+                    totals_row[0] = "TOTALS"
+
+                    rows.append([''] * len(totals_row))       #Blank line
+                    rows.append(totals_row)
+                    # Now print the table with row numbers
+
+                    #rows = [[i] + row for i,row in enumerate(data[1:], start=1) if row] 
                     print("\n")
-                    print(tabulate.tabulate(rows, headers=headers,tablefmt='PIPE'))   
+                    headers_with_row = ["Row"] + headers  # Add "Row" header
+                    print("\n")
+
+                    print(tabulate.tabulate(rows, headers=headers_with_row,tablefmt='PIPE'))   
+                    print("\n")
+                    print("\n")
+                    #print(f"Total Trades: {len(rows)}")  #debugging line
+                    
                #debugging line
                #print("Total Rows: ",rows,len(rows))  #debugging line
                     return rows            
                
                 else:
-                    print("No trade records found.")
+                   print("No trade records found.")
 
         except Exception as e:
             print(f"Error viewing trades: {e}")
@@ -247,8 +319,8 @@ class Options:
             for row in data[1:]:
                     try:
                         total_profit_loss += int(row[-1])
-                        #print(f"Row {row[0]} Profit/Loss: {row[-1]}")  #debugging line
-                        #print(f"Debug: Total Profit/Loss so far: {total_profit_loss}")  #debugging line
+                        print(f"Row {row[0]} Profit/Loss: {row[-1]}")  #debugging line
+                        print(f"Debug: Total Profit/Loss so far: {total_profit_loss}")  #debugging line
                     #except ValueError as e:
                     except (ValueError, IndexError):
                         print(f"Error calculating profit/loss for row {row}; skipping.")
@@ -300,13 +372,13 @@ def Options_Trade_Editor (file_name, Amend_delete):
 
             field_mapping = {
             "Symbol": Get_valid_input.get_valid_symbol,
-            "Strike Date": Get_valid_input.get_valid_date,
+            "Open Date": Get_valid_input.get_valid_date,
             "C/P": Get_valid_input.get_valid_call_put,
             "Strike": Get_valid_input.get_valid_int,
             "Exp Date": Get_valid_input.get_valid_exp_date,
             "Premium": Get_valid_input.get_valid_float,
             "Contracts": Get_valid_input.get_valid_int,
-            "Total Open Premium": Get_valid_input.get_valid_float,  # Optional: Recalculate instead of asking
+           #"Total Open Premium": Get_valid_input.get_valid_float,  # Optional: Recalculate instead of asking
             "Current Price": Get_valid_input.get_valid_int,
             "Close Cost": Get_valid_input.get_valid_int,
             "Status": Get_valid_input.get_valid_status,
@@ -318,7 +390,7 @@ def Options_Trade_Editor (file_name, Amend_delete):
 
         # Header row for reference
             headers = CSV_HEADERS  # Use the predefined CSV headers
-            #["Symbol", "Strike Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts","Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"]
+            #["Symbol", "Open Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts","Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"]
 
         # Update the row
             updated_row = []
@@ -335,7 +407,7 @@ def Options_Trade_Editor (file_name, Amend_delete):
             for header, value in zip(headers, rows[trade_row-1]):   # Skip the first column (row number)
                 
                     # Edit all other fields
-                if not header == "Profit/Loss":  # Skip Profit/Loss field
+                if not ((header == "Profit/Loss") or (header == "Total Open Premium")):  # Skip Profit/Loss and Total Open Preimum fields
                     print(f"Editing Field: {header} (Current Value: {value})")
                     validation_method = field_mapping.get(header)  # Get the corresponding validation method
                     if validation_method:
@@ -344,7 +416,10 @@ def Options_Trade_Editor (file_name, Amend_delete):
                     # Validate the new value using the corresponding method
                             try:
                                 validated_value = validation_method(f"Enter valid {header}: ")
-                                updated_row.append(validated_value)
+                                if header == "Premium":    # Always format with two decimal places
+                                    updated_row.append(f"{float(validated_value):.2f}")
+                                else: 
+                                   updated_row.append(validated_value)
                                 print(f"Debug - Updated {header} to {validated_value}")  #debugging line
                             except Exception as e:
                                 print(f"Invalid input for {header}. Keeping original value: {value}")
@@ -356,8 +431,21 @@ def Options_Trade_Editor (file_name, Amend_delete):
                             print(f"Keeping original value for {header}: {value}")
                     else:
                 # If no validation method is defined, keep the original value
-                        updated_row.append(value)
-
+                       if header == "Premium":  # Always format with two decimal places
+                            updated_row.append(f"{float(value):.2f}")
+                       else:
+                            updated_row.append(value)
+                elif header == "Total Open Premium":
+                        # Recalculate "Total Open Premium" based on updated values and skip editing this field
+                        try:                    
+                            premium = float(updated_row[headers.index("Premium")])  # Adjust index for skipped row number       
+                            contracts = int(updated_row[headers.index("Contracts")])
+                            total_open_premium = premium * contracts * 100
+                            updated_row.append(f"{total_open_premium:.0f}")  # Append recalculated "Total Open Premium"
+                            print(f"Debug - Recalculating Total Open Premium: {total_open_premium}")  #debugging line   
+                        except Exception as e:
+                            print(f"Error recalculating Total Open Premium; Entering Zero: {e}")
+                            updated_row.append("0")
                 elif header == "Profit/Loss":
                     # Recalculate "Profit/Loss" based on updated values and skip editing this field
                     
@@ -366,7 +454,12 @@ def Options_Trade_Editor (file_name, Amend_delete):
                         contracts = int(updated_row[headers.index("Contracts")])
                         close_cost = int(updated_row[headers.index("Close Cost")])
                         # Calculate total open premium and profit/loss
+                        print(f"Debug - Recalculating Profit/Loss for trade row {trade_row}:")  #debugging line
+                        print(f"Premium: {premium}, Contracts: {contracts}, Close Cost: {close_cost}")  #debugging line
+
                         total_open_premium = premium * contracts * 100
+                        print(f"Total Open Premium: {total_open_premium}")  #debugging line
+                        print(f"Close Cost: {close_cost}")  #debugging line
                         try:
                             profit_loss = int(total_open_premium - close_cost)
                             updated_row.append(str(int(profit_loss)))  # Append recalculated "Profit/Loss"
@@ -416,7 +509,7 @@ def Options_Trade_Editor (file_name, Amend_delete):
                     
                    # Write the header row first
                  writer.writerow(CSV_HEADERS)
-                     #["Symbol", "Strike Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts", "Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"])  
+                     #["Symbol", "Open Date", "C/P", "Strike", "Exp Date", "Premium", "Contracts", "Total Open Premium", "Current Price", "Close Cost", "Status", "Profit/Loss"])  
 
                  writer.writerows(rows)  # Write all rows except the header
 
@@ -436,20 +529,26 @@ def Options_Trade_Editor (file_name, Amend_delete):
             print(f"Trade {trade_row} not found.") 
 
 def main():
-    try:
+    while True:
+        try:
         #debugging line
-        print("Made it to main") #debugging line
-        print(f"Current working directory: {os.getcwd()}")  #debugging line
-
-    except Exception as e:
-        print(f"Error in main: {e}")
-        sys.exit(1)    
+         #print("Made it to main") #debugging line
+         #print(f"Current working directory: {os.getcwd()}")  #debugging line
+             file_name = "Options.csv"
     
+             OptionsTracker = Options(file_name)
+             OptionsTracker.choose_option()
+        except Exception as e:
+          print(f"Error in main: {e}")
+          print("Restarting Options Tracker...")
+          # Handle the RestartProgram exception to restart the program
+          
 
-    file_name = "Options.csv"
-    
-    OptionsTracker = Options(file_name)
-    OptionsTracker.choose_option()
+        except RestartProgram:   
+            print("Restarting Options Tracker...")
+            continue
+
+   
     
 
 

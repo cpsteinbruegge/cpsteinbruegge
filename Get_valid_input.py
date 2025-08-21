@@ -22,6 +22,12 @@ import keyboard
   #  key = msvcrt.getch()  # Waits for a single key press
    # return key.decode()  # Decode the byte to a string
 
+#Exit and return to main program if input is 'X' or 'x'
+
+class RestartProgram(Exception):
+    pass
+
+
 def get_valid_symbol(prompt):
     #print(f"Debug: In get_valid_symbol") #debug
     while True:
@@ -31,9 +37,13 @@ def get_valid_symbol(prompt):
 
             symbol = input(prompt).strip()  # Remove leading/trailing whitespace
             #print(f"Debug: User entered {symbol}") #debug
-
+            if symbol.upper() == 'X' or symbol.lower() == 'x':
+                print("Exiting program.")
+                raise RestartProgram()
             if re.match(r'^[A-Za-z0-9./-]{1,5}$', symbol):
                 break
+        except RestartProgram:
+          raise     
         except Exception as e:
           print("Invalid symbol. Please enter 1-4 letters.")
 
@@ -43,32 +53,47 @@ def get_valid_symbol(prompt):
 def get_valid_date(prompt):
     
     while True:
-        date_str = input(prompt)
-        try:
+      try:  
+        value = input(prompt).strip()  # Remove leading/trailing whitespace
+        if value.upper() == 'X' or value.lower() == 'x':
+            print("Exiting program.")
+            raise RestartProgram()
+        elif not value:
+            # If no input, return today's date
+            today = datetime.datetime.now().strftime("%m-%d-%Y")
+            print(f"Using today's date: {today}")
+            return today
+        
+        else:
           #print(f"Debug: User entered {date_str}") #debug
 
-        
-
+           try:
           #print(f"Debug: is date_str empty? {'Yes' if not date_str else 'No'}") #debug
           
          #(f"Debug: User entered {date_str}") #debug
-
-          if not date_str:
-            #print (f"{datetime.datetime.now().date()}")   # return today's date if no date is entered
-            datetoday = datetime.datetime.now().strftime("%m-%d-%Y")
-            print(f"{datetoday}")
-            return datetoday
-            #return datetime.datetime.now.date()   # return today's date if no date is entered
+              date_str = value.strip()  # Remove leading/trailing whitespace 
+            
+           
         
           
         
-          datetoday = datetime.datetime.strptime(date_str, "%m-%d-%Y")
-          print(f"{datetoday.date()}")
-          return datetoday.date()
+              datetoday = datetime.datetime.strptime(date_str, "%m-%d-%Y")
+              print(f"{datetoday.date()}")
+           except Exception as e:
+            print("Invalid date format. Please use MM-DD-YYYY.")   
+            continue
+        # If the date is valid, return it in MM-DD-YYYY format
+                #print(f"Debug: Parsed date is {datetoday.date()}") #debug
+                #print(f"Debug: Returning date {datetoday.date()}") #debug        
+      except RestartProgram:
+          raise
+      except Exception as e:
+            print(f"Error: {e}. Please try again.")
+            continue
+    return datetoday.date()     
         
-        except ValueError:
-            print("Invalid date. Please try again.")
-
+      
+      
 
 #current_date = get_valid_date("Enter Date (MM-DD-YYYY):")
 # get_valid_date("Enter Date (MM-DD-YYYY), Press <Return> for today's date: ")
@@ -83,6 +108,11 @@ def get_valid_exp_date(prompt, default_date=None):
             prompt_with_default = f"{prompt}: "
 
         date_str = input(prompt_with_default)
+
+        if date_str.upper() == 'X' or date_str.lower() == 'x':
+            print("Exiting program.")
+            raise RestartProgram()
+        
         if not date_str:
             if default_date:
                 return default_date
@@ -100,6 +130,11 @@ def get_valid_call_put  (prompt):
     # Get valid input for Call or Put option
     while True:
         cp = input("Enter C/P: ").upper()
+
+        if cp.upper() == 'X' or cp.lower() == 'x':
+            print("Exiting program.")
+            raise RestartProgram()
+        
         if cp == "C" or cp == "P":
             break
         else:
@@ -111,6 +146,11 @@ def get_valid_status (prompt):
     while True:
 
         status = input("Enter Status: (O)pen/(C)losed: ").upper()
+
+        if status.upper() == 'X' or status.lower() == 'x':
+            print("Exiting program.")
+            raise RestartProgram()
+        
         if status == "O" or status == "C":
             return status.upper()
             break   
@@ -121,17 +161,31 @@ def get_valid_status (prompt):
 def get_valid_float(prompt,decimal_places):
     while True:
         try:
-          value = float(input(prompt))
+          
+         value = input(prompt).strip()
+         
+         if value.upper() == 'X' or value.lower() == 'x':
+                print("Exiting program.")
+                raise RestartProgram() 
+         
+         value = float(input(prompt))
 
-          return round(value, decimal_places)
         
+
+         return f"{value:.2f}"  # Return as string formatted to two decimal places
+
         except ValueError:
             print(f"Invalid input. Please enter a number with {decimal_places} decimal places. ")
 
 def get_valid_int(prompt):
     while True:
         try:
-            value = int(input(prompt))
+            value = input(prompt).strip()
+            if value.upper() == 'X' or value.lower() == 'x':
+                print("Exiting program.")
+                raise RestartProgram()
+            
+            value = int(value)
             return value
                 
         except ValueError:
