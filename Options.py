@@ -5,7 +5,8 @@ import os
 import datetime
 import sys
 
-    # Check git hub path issues
+    # Check Git functions
+    
     
 
     # Debugging lines to check current working directory and sys.path
