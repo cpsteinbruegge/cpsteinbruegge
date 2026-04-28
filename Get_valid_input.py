@@ -27,7 +27,10 @@ import keyboard
 class RestartProgram(Exception):
     pass
 
+
+    
 def validate_symbol(value):
+
     if re.match(r'^[A-Za-z]{1,4}$', value):
         return value.upper()
      
@@ -40,9 +43,8 @@ def get_valid_symbol(prompt):
     while True:
         
         try:
-
-
-            symbol = input(prompt).strip()  # Remove leading/trailing whitespace
+            symbol = input(prompt).strip()
+           
             #print(f"Debug: User entered {symbol}") #debug
             if symbol.upper() == 'X' or symbol.lower() == 'x':
                 print("Exiting program.")
@@ -67,41 +69,25 @@ def validate_date(value):
     
 
 def get_valid_date(prompt):
-    
     while True:
-      try:  
-        value = input(prompt).strip()  # Remove leading/trailing whitespace
-        if value.upper() == 'X' or value.lower() == 'x':
-            print("Exiting program.")
-            raise RestartProgram()
-        elif not value:
-            # If no input, return today's date
-            today = datetime.datetime.now().strftime("%m-%d-%Y")
-            print(f"Using today's date: {today}")
-            return today
-        
-        elif re.fullmatch(r"\d{2}[-/]\d{2}[-/]\d{4}", value):
-            return value.replace('/', '-')  # Normalize to MM-DD-YYYY format
-          
-           
-          #print(f"Debug: User entered {date_str}") #debug
-
-           #try:
-          #print(f"Debug: is date_str empty? {'Yes' if not date_str else 'No'}") #debug
-          # (f"Debug: User entered {date_str}") #debug
-          #    date_str = value.strip()  # Remove leading/trailing whitespace
-
-        #   datetoday = datetime.datetime.strptime(date_str, "%m-%d-%Y")
-        #      print(f"{datetoday.date()}")
-      except Exception as e:
-            print("Invalid date format. Please use MM-DD-YYYY.")   
-            continue
-        # If the date is valid, return it in MM-DD-YYYY format
-                #print(f"Debug: Parsed date is {datetoday.date()}") #debug
-                #print(f"Debug: Returning date {datetoday.date()}") #debug        
-      except RestartProgram:
-          raise
-      except Exception as e:
+        try:  
+            value = input(prompt).strip()  # Remove leading/trailing whitespace
+            if value.upper() == 'X' or value.lower() == 'x':
+                print("Exiting program.")
+                raise RestartProgram()
+            elif not value:
+                # If no input, return today's date
+                today = datetime.datetime.now().strftime("%m-%d-%Y")
+                print(f"Using today's date: {today}")
+                return today
+            elif re.fullmatch(r"\d{2}[-/]\d{2}[-/]\d{4}", value):
+                return value.replace('/', '-')  # Normalize to MM-DD-YYYY format
+            else:
+                print("Invalid date format. Please use MM-DD-YYYY.")
+                continue
+        except RestartProgram:
+            raise
+        except Exception as e:
             print(f"Error: {e}. Please try again.")
             continue
 
@@ -140,10 +126,10 @@ def get_valid_exp_date(prompt, default_date=None):
         except ValueError:
             print("Invalid date format. Please try again.")
 
-def get_valid_call_put  (prompt):    
+def get_valid_call_put(prompt):    
     # Get valid input for Call or Put option
     while True:
-        cp = input("Enter C/P: ").upper()
+        cp = input(prompt).upper()
 
         if cp.upper() == 'X' or cp.lower() == 'x':
             print("Exiting program.")
@@ -156,10 +142,9 @@ def get_valid_call_put  (prompt):
     return cp   
 
 
-def get_valid_status (prompt):
+def get_valid_status(prompt):
     while True:
-
-        status = input("Enter Status: (O)pen/(C)losed: ").upper()
+        status = input(prompt).upper()
 
         if status.upper() == 'X' or status.lower() == 'x':
             print("Exiting program.")
@@ -179,21 +164,15 @@ def validate_float(value, decimal_places=2):
     except ValueError:
         return None
 
-def get_valid_float(prompt,decimal_places=2):
+def get_valid_float(prompt, decimal_places=2):
     while True:
-         value = input(prompt)
-
-        
-
-         if value.upper() == 'X' or value.lower() == 'x':
-                print("Exiting program.")
-                raise RestartProgram() 
-         try:
-          return round(float(value), decimal_places)
-
-          #return f"{returnvalue:.{decimal_places}f}"  # Return as string formatted to specified decimal places
-
-         except ValueError:
+        value = input(prompt).strip()
+        if value.upper() == 'X' or value.lower() == 'x':
+            print("Exiting program.")
+            raise RestartProgram() 
+        try:
+            return round(float(value), decimal_places)
+        except ValueError:
             print(f"Invalid input. Please enter a number with {decimal_places} decimal places. ")
 
 def validate_int(value):
